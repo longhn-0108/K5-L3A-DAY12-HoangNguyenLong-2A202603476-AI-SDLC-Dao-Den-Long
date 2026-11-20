@@ -1,75 +1,84 @@
-# Đảo Đèn Lồng — Ba Hòn Đảo (Day 12 AI SDLC Lab)
+# Đảo Đèn Lồng — v1.0.0 (Day 12 AI SDLC Lab)
 
-> **Tác giả:** Hoàng Nguyên Long (`2A202603476`) · Lớp K5-L3A
-> **Phiên bản:** Phase 2 (`TICKET-02`) · **Test Contract v1.1** · 3 Đêm (Đảo Bến, Đảo Cau, Đảo Chuông).
+> **Video Demo (< 5 phút):** [Xem trên GitHub Release v1.0.0](https://github.com/longhn-0108/K5-L3A-DAY12-HoangNguyenLong-2A202603476-AI-SDLC-Dao-Den-Long/releases/tag/v1.0.0) *(hoặc `docs/demo/demo.mp4` sau khi upload)*
+> **Tác giả:** Hoàng Nguyên Long (`2A202603476`) · Lớp K5-L3A · **Test Contract v1.3**
 
-Người chơi điều khiển **Mây** (đội nón lá treo đèn lồng nhỏ) đi qua **Ba Hòn Đảo**: thu thập đom đóm, lướt qua hiểm nguy, thắp sáng các Đèn Lồng Lớn, né **Bóng Mực**, đối phó **Gió Lạc**, dùng **Bùa Gió** và đón Bình Minh trở lại.
+Game 3D góc nhìn từ trên xuống xây dựng bằng **Three.js + Vite + Node.js**: điều khiển **Mây** (đội nón lá treo đèn lồng) vượt qua **3 Đêm** (*Đảo Bến*, *Đảo Cau*, *Đảo Chuông*), gom đom đóm, thắp & châm dầu giữ ít nhất **60% Đèn Lồng Lớn** sáng tới bình minh trước **Bóng Mực** và **Gió Lạc**.
 
 ---
 
-## Cài đặt & Chạy (tối đa 3 lệnh)
+## Yêu cầu hệ thống
+- **Node.js ≥ 18** (chạy giống nhau trên macOS, Linux, Windows).
+- Trình duyệt hỗ trợ WebGL2 (Chrome / Edge / Safari / Firefox); chế độ `bench` tự tìm Chrome/Chromium/Edge (có thể chỉ định bằng biến môi trường `CHROME_BIN`).
 
-Yêu cầu: **Node.js ≥ 18** (chạy giống nhau trên macOS, Linux, Windows).
+## Cài đặt & Chạy (tối đa 3 lệnh)
 
 ```bash
 npm install
 npm run build
-npm run dev
+node src/run.js
 ```
 
-Mở trình duyệt tại URL Vite hiển thị (mặc định `http://localhost:5173`).
+*(Hoặc chạy dev server bằng `npm run dev`.)*
 
-### Chạy kiểm thử & chế độ Headless (Contract v1.1)
+---
+
+## Chạy Test, Headless, Benchmark, Soak & Xuất Bảng Xếp Hạng
 
 ```bash
+# 1. Toàn bộ unit test + Contract CLI + Leaderboard + Soak (13/13 pass)
 npm test
+
+# 2. Bộ kiểm chứng Contract v1.2/v1.3 + tất định 3 Đêm
 npm run verify
-node src/headless.js --seed 42 --night 3 --ticks 600 --out out.jsonl
+
+# 3. Chế độ Headless (Contract v1.3, --night 1 | 2 | 3)
+node src/headless.js --seed 42 --night 1 --ticks 600 --out out.jsonl
+
+# 4. Chế độ Benchmark 1280×720 (tắt vsync bằng --disable-frame-rate-limit --disable-gpu-vsync)
+node src/bench.js --seed 42 --duration 30 --out bench.json
+
+# 5. Soak test 10 Đêm liên tiếp
+node --max-semi-space-size=2 --expose-gc src/soak.js --seed 7 --nights 10 --out soak.json
+
+# 6. Xuất Bảng xếp hạng cục bộ ra JSON
+node src/run.js --export-leaderboard leaderboard.json
 ```
 
+> **Ghi chú VSync:** `src/bench.js` khởi chạy Chromium/Chrome/Edge với cờ `--disable-frame-rate-limit --disable-gpu-vsync` (`vsync_off: true`). Trên máy test (AMD Radeon integrated, Windows 11, 1280×720) đạt **`349.0 avg FPS`**, **`155.2 p1_low FPS`**, **`load_ms = 2710 ms`** (xem [bench.json](bench.json)).
+
 ---
 
-## Điều khiển
+## Điều khiển (mặc định — đổi phím được trong Cài đặt)
 
-| Phím / Chuột | Hành động |
+| Phím | Hành động |
 |---|---|
-| `W` `A` `S` `D` (hoặc `↑` `↓`) | Di chuyển (6.0 m/s; 7.2 m/s khi có Bùa Gió) |
-| `Space` | Nhảy (7.0 m/s, chỉ nhảy khi chạm đất) |
-| `Shift` | **Lướt (Dash):** 14 m/s trong 0.2s, hồi chiêu 1.5s (0s khi có Bùa Gió) |
-| `E` (hoặc `F`) | Nạp đom đóm vào Đèn Lồng Lớn gần nhất (bán kính 2.0m, 10 đom đóm/đèn) |
-| `R` | **Tỏa sáng (Pulse):** tốn 3 đom đóm, bán kính 5m, hồi chiêu 3s |
-| `Esc` / `P` | Tạm dừng (dừng hoàn toàn logic, mở menu Tạm dừng & Cài đặt) |
-| `←` `→` / `Q` / Kéo chuột trái / Cuộn chuột | Xoay & zoom camera 3D |
+| `W` `A` `S` `D` | Di chuyển (6.0 m/s; 7.2 m/s khi có Bùa Gió) |
+| `Space` | Nhảy (7.0 m/s) |
+| `Shift` | Lướt / Dash (14 m/s trong 0.2s; hồi chiêu 1.5s, 0s khi có Bùa Gió) |
+| `E` | Nạp đom đóm / Thắp lại (5 đom đóm) / Châm dầu đèn đang sáng |
+| `R` | Tỏa sáng / Pulse (tốn 3 đom đóm, bán kính 5m, hồi chiêu 3s) |
+| `Esc` / `P` | Tạm dừng & mở menu Cài đặt |
+| `←` `→` / `Q` / Kéo chuột / Cuộn chuột | Xoay & zoom camera 3D |
 | `M` | Tắt / bật âm thanh |
-
----
-
-## Ba Hòn Đảo & Luật chơi chuẩn hóa (Contract v1.1)
-
-Thông số khớp 100% với [game.contract.json](game.contract.json):
-
-- **Đêm 1 — Đảo Bến (300s):** Đảo tròn `R = 40m`, 5 Đèn Lồng Lớn (`L1–L5`), rơi xuống `Y < -10` mất 1 Ngọn Lửa & toàn bộ đom đóm.
-- **Đêm 2 — Đảo Cau (330s):** 2 đảo `R = 28m` nối bằng cầu tre không lan can + 2 bục nhảy phóng qua đảo + **Gió Lạc** + **Bùa Gió** (`C1`), 6 Đèn (`L1–L6`).
-- **Đêm 3 — Đảo Chuông (360s):** Đảo 3 tầng (`Y = 0, 3, 6`) + 2 dốc thẳng + bục nhảy lên tầng 2 + Tháp Chuông + **Gió mạnh** mỗi 30s + Gió Lạc + 2 Bùa Gió (`C1, C2`), 7 Đèn (`L1–L7`).
-- **Tính điểm chuẩn hóa:** `+10` mỗi đom đóm nạp · `+100` mỗi đèn thắp · `+5` mỗi Bóng Mực trúng Tỏa Sáng · Thưởng thắng: `floor(time_left_s) × 2 + flames × 50`.
 
 ---
 
 ## Sáng tạo của tôi
 
-1. **Mây phong cách Ninja & Đèn nón lá phản hồi ánh sáng:** Khi chạy/lướt, Mây lao nghiêng người với khăn choàng đỏ (`#C8102E`) phấp phới, để lại vệt bụi ánh sáng và lộn nhào khi nhảy; đèn nhỏ dưới vành nón lá sáng rực theo số đom đóm mang theo.
-2. **Tạo hình Bóng Mực dạng Bóng Ma (Spectral Ghosts):** Bóng Mực tuân thủ đúng bảng màu chuẩn (`#120A1A` / `#7A3CFF` / `#3A3450`) nhưng mang dáng dấp bóng ma lơ lửng, run rẩy mờ dần khi bị choáng.
-3. **Đèn hoa đăng ước nguyện & Hiệu ứng Bloom:** Thắp xong Đèn Lồng Lớn thả 5 đèn hoa đăng bay lên bầu trời sao, kết hợp `UnrealBloomPass` của Three.js và nội suy mượt 60Hz→144Hz.
-4. **Nhạc nền đêm & 10+ hiệu ứng âm thanh tổng hợp (Web Audio API):** Hoàn toàn procedural, không dùng file âm thanh ngoài, chỉnh được âm lượng và lưu cài đặt qua `localStorage`.
+1. **Mây phong cách Ninja & Đèn nón lá phản hồi ánh sáng:** Tư thế lao nghiêng khi chạy/lướt với khăn choàng đỏ (`#C8102E`) phấp phới, lộn nhào khi nhảy (tắt khi bật *Giảm chuyển động*), đèn treo vành nón sáng dần theo đom đóm mang theo.
+2. **Bóng Mực tạo hình Bóng Ma (Spectral Ghosts) & Cảnh quan 3 đảo sống động:** Bóng ma bán trong suốt đúng bảng màu chuẩn (`#120A1A`/`#7A3CFF`, đổi sang `#00B3FF` ở chế độ mù màu); cảnh quan đặc trưng từng đảo (bến tàu & thuyền bập bềnh ở Đảo Bến, hàng cây Cau & cầu tre lát thanh ở Đảo Cau, chuông đồng lắc trong gió ở Đảo Chuông) kèm mưa đêm nhẹ và `UnrealBloomPass`.
+3. **Âm thanh ngũ cung & nhạc nền đêm tổng hợp (Web Audio API):** 100% procedural, không dùng file âm thanh ngoài.
 
-**Bằng chứng không phá Test Contract:** Mọi yếu tố sáng tạo nằm hoàn toàn trong `src/client/`. `npm test` (14/14 pass) và `npm run verify` (6/6 pass, gồm tất định cả 3 Đêm và benchmark 21.600 tick trong ~0.73s) xác nhận đầu ra headless chuẩn 100%.
+**Bằng chứng không phá Test Contract & Benchmark:** Toàn bộ sáng tạo nằm trong `src/client/`, tự động tắt ở `?bench=1` và không tồn tại trong `src/sim/`. `npm test` (13/13 pass), `npm run verify` (5/5 pass), [bench.json](bench.json) (`349 FPS`) và [soak.json](soak.json) (`0 crashes`) xác nhận tuân thủ 100%.
 
 ---
 
-## Hồ sơ SDLC, Harness AI & Bằng chứng
+## Hồ sơ SDLC, Harness AI, Bằng chứng & Retro
 
-- **Contract v1.1:** [game.contract.json](game.contract.json)
-- **Harness AI:** [AGENTS.md](AGENTS.md), [.agents/skills/verify-phase/SKILL.md](.agents/skills/verify-phase/SKILL.md), [.github/workflows/ci.yml](.github/workflows/ci.yml)
-- **Spec & Ghi chép:** [docs/notes/phase-1.md](docs/notes/phase-1.md), [docs/notes/phase-2.md](docs/notes/phase-2.md)
-- **Bằng chứng kiểm chứng:** [docs/proof/phase-1.md](docs/proof/phase-1.md), [docs/proof/phase-2.md](docs/proof/phase-2.md)
-- **Bản quyền & Nguồn:** [LICENSE](LICENSE), [CREDITS.md](CREDITS.md)
+- **Test Contract v1.3:** [game.contract.json](game.contract.json) · [bench.json](bench.json) · [soak.json](soak.json)
+- **Harness AI:** [AGENTS.md](AGENTS.md) · [.agents/skills/verify-phase/SKILL.md](.agents/skills/verify-phase/SKILL.md) · [.github/workflows/ci.yml](.github/workflows/ci.yml)
+- **ADR & Changelog:** [docs/adr/001-fuel-and-dawn-win.md](docs/adr/001-fuel-and-dawn-win.md) · [CHANGELOG.md](CHANGELOG.md)
+- **Ghi chép & Retro:** [phase-1.md](docs/notes/phase-1.md) · [phase-2.md](docs/notes/phase-2.md) · [phase-3.md](docs/notes/phase-3.md) · [retro.md](docs/notes/retro.md)
+- **Bằng chứng từng phase:** [phase-1](docs/proof/phase-1.md) · [phase-2](docs/proof/phase-2.md) · [phase-3](docs/proof/phase-3.md) · [phase-4](docs/proof/phase-4.md)
+- **Bản quyền & Nguồn:** [LICENSE](LICENSE) · [CREDITS.md](CREDITS.md)

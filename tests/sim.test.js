@@ -6,10 +6,11 @@ import { GameEngine } from '../src/sim/engine.js';
 import { SeededPRNG } from '../src/sim/prng.js';
 import { TUNING } from '../src/sim/tuning.js';
 
-describe('Contract v1.2 & Tuning Consistency', () => {
-  it('src/sim/tuning.js matches game.contract.json v1.2 exactly', () => {
+describe('Contract v1.3 & Tuning Consistency', () => {
+  it('src/sim/tuning.js matches game.contract.json v1.3 exactly', () => {
     const contract = JSON.parse(fs.readFileSync(path.resolve('game.contract.json'), 'utf8'));
-    assert.equal(contract.contract_version, '1.2');
+    assert.equal(contract.contract_version, '1.3');
+    assert.ok(contract.bench_cmd && contract.soak_cmd);
     assert.deepEqual(TUNING, contract.tuning);
   });
 });
