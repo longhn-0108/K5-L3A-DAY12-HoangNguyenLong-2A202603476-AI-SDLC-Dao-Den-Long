@@ -1,103 +1,83 @@
-# Day 12 — AI SDLC: Đảo Đèn Lồng
+# Đảo Đèn Lồng — Day 12 AI SDLC Lab
 
-> **Cá nhân** (1 người / 1 MSSV) · Áp dụng SDLC cùng AI để xây một **game 3D** qua **4 phase**, từ yêu cầu ban đầu tới bản phát hành.
-> **Lab board + trợ giảng:** **[Đảo Đèn Lồng Lab](https://claude.ai/artifact/Q1RYyv1dxjUczzCbd2ZnoW)**
+> **Tác giả:** Hoàng Nguyên Long (`2A202603476`) · Lớp K5-L3A
+> **Thể loại:** Game 3D góc nhìn thứ ba (Three.js + Vite) kèm chế độ Headless chạy Node.js theo **Test Contract v1.0**.
+
+Người chơi điều khiển **Mây** (đội nón lá treo đèn lồng nhỏ) trên **Đêm 1 – Đảo Bến**: thu thập **đom đóm**, nạp ánh sáng để thắp lại **5 Đèn Lồng Lớn**, và **tỏa sáng** xua đuổi **Bóng Mực** trong sương đen.
 
 ---
 
-## Tài liệu của lab
+## Cài đặt & Chạy (tối đa 3 lệnh)
 
-| File | Nội dung |
+Yêu cầu: **Node.js ≥ 18** (chạy giống nhau trên macOS, Linux, Windows).
+
+```bash
+npm install
+npm run build
+npm run dev
+```
+
+Mở trình duyệt tại URL Vite hiển thị (mặc định `http://localhost:5173`) để chơi ngay.
+
+### Chạy kiểm thử & chế độ Headless
+
+```bash
+npm test
+npm run verify
+node src/headless.js --seed 42 --night 1 --ticks 600 --out out.jsonl
+```
+
+---
+
+## Điều khiển
+
+| Phím / Chuột | Hành động |
 |---|---|
-| [GUIDE.md](GUIDE.md) | Hướng dẫn làm lab: vòng làm việc mỗi phase, harness, kiểm chứng, token |
-| [CHECKPOINTS.md](CHECKPOINTS.md) | Các mốc tự kiểm tra từ chuẩn bị đến nộp bài |
-| [SUBMISSION.md](SUBMISSION.md) | Đặt tên repo, hạn nộp, tag, Release, video, checklist |
-| [RULES.md](RULES.md) | Quy định: AI, trung thực về bằng chứng, bản quyền, bảo mật |
-| [RUBRIC.md](RUBRIC.md) | Thang điểm chi tiết |
-
-## Lab board
-
-Yêu cầu dự án được phát hành tại **[Đảo Đèn Lồng Lab](https://claude.ai/artifact/Q1RYyv1dxjUczzCbd2ZnoW)**. Mỗi phase là một tab (tab chưa phát hành bị khóa), mỗi tab có trợ giảng AI riêng chỉ trả lời trong phạm vi phase đó. Trợ giảng cần đăng nhập claude.ai và dùng lượt Claude của bạn.
-
-## Dự án
-
-**Đảo Đèn Lồng**: game 3D góc nhìn thứ ba. Mây, người giữ đèn nhỏ tuổi, gom đom đóm để thắp lại các Đèn Lồng Lớn và né Bóng Mực trong sương đen.
-
-- Không ràng buộc công nghệ; chạy được trên macOS hoặc Linux.
-- Tuân theo **Test Contract** (chế độ headless) để được chấm tự động và so sánh với nhau.
-
-| Phase | Bạn nhận | Nộp |
-|---|---|---|
-| 1 | **PRD-0** (mô tả tổng quát) + Test Contract | tag `phase-1` |
-| 2 | **Ticket-02**, phát hành khi Phase 1 kết thúc | tag `phase-2` |
-| 3 | **Ticket-03**, phát hành khi Phase 2 kết thúc | tag `phase-3` |
-| 4 | **Ticket-04**, phát hành khi Phase 3 kết thúc | tag `phase-4` + Release `v1.0.0` |
-
-Yêu cầu sẽ được bổ sung và có thể thay đổi giữa các phase, giống dự án thật.
-
-### Lịch 4 giờ
-
-Bài lab kéo dài **4 giờ**. Phase 1 và 2 khoảng **1 giờ**, Phase 3 khoảng **30 phút**, Phase 4 khoảng **1 giờ 30 phút**. Mỗi phase phát hành đúng mốc giờ. Phase mới xuất hiện trên lab board khi tới mốc.
-
-| Mốc | Sự kiện | Hạn tag |
-|---|---|---|
-| 0h | Phát hành **Phase 1** (PRD-0), gồm cả phần chuẩn bị | `phase-1` trước mốc 1h |
-| 1h | Phát hành **Phase 2** | `phase-2` trước mốc 2h |
-| 2h | Phát hành **Phase 3** | `phase-3` trước mốc 2h30 |
-| 2h30 | Phát hành **Phase 4** | `phase-4`, Release `v1.0.0` và video trước mốc 4h |
-| 4h | Hết giờ lab, chốt bài | |
-
-Hết giờ mỗi phase thì tag và chuyển sang phase tiếp theo, dù phase chưa hoàn hảo. Chỗ chưa xong ghi trung thực trong bằng chứng.
+| `W` `A` `S` `D` (hoặc `↑` `↓`) | Di chuyển theo góc nhìn camera |
+| `Space` | Nhảy |
+| `E` hoặc `F` | Nạp đom đóm vào Đèn Lồng Lớn gần nhất (trong `interact_radius = 3m`) |
+| `R` | Tỏa sáng xua & đẩy lùi Bóng Mực / Bóng Ma (tốn `2` đom đóm, hồi chiêu `4s`) |
+| `←` `→` / `Q` / Kéo chuột trái | Xoay camera 3D quanh Mây |
+| `M` | Tắt / bật âm thanh |
 
 ---
 
-## Gợi ý SDLC (cách làm là của bạn)
+## Luật chơi & Cách tính điểm (Đêm 1)
 
-Mỗi phase là một vòng nhỏ. Công cụ, thứ tự, định dạng tài liệu đều tự do; đây chỉ là gợi ý:
+Thông số khớp 100% với [game.contract.json](game.contract.json):
 
-1. **Requirements:** biến yêu cầu thành tiêu chí nghiệm thu kiểm chứng được. Chỗ mơ hồ thì tự giả định và ghi lại.
-2. **Plan:** nghĩ cách kiểm chứng **trước** khi để agent viết code.
-3. **Build:** để agent viết, bạn điều phối và review.
-4. **Verify:** chạy thật, kiểm tra hành vi thật. *Không có bằng chứng thì chưa xong*: "agent bảo chạy rồi" không phải bằng chứng.
-5. **Evaluate:** cái gì đạt, AI sai ở đâu, harness (AGENTS.md, skill, hook) cần chỉnh gì.
-6. **Release:** gắn tag.
+- **Mục tiêu thắng:** Thắp sáng cả `5` Đèn Lồng Lớn (mỗi đèn cần `5` đom đóm) trong `240` giây.
+- **Điều kiện thua:** Mất hết `3` ngọn lửa (máu) do chạm Bóng Mực, hoặc hết thời gian (`dawn`).
+- **Tỏa sáng (Pulse):** Tốn `2` đom đóm, bán kính `7m`, làm choáng Bóng Mực `3s` và đẩy lùi `6m` (hồi chiêu `4s`).
+- **Vùng an toàn:** Đèn Lồng Lớn đã thắp tạo vùng an toàn bán kính `6m` mà Bóng Mực không thể tiến vào.
+- **Rơi khỏi đảo (`fall_enabled: false`):** Đảo có viền mây giữ nhân vật trong bán kính `34.5m`, không bị phạt rơi.
 
-## Ba điều cần nhớ
-
-> Bạn được **tự do sáng tạo thêm** quanh phần lõi (nhân vật, cơ chế nhỏ, câu chuyện, hiệu ứng, âm thanh…). Sáng tạo gọn và không phá yêu cầu được tính điểm trong hạng mục F của [RUBRIC](RUBRIC.md); ghi mục "Sáng tạo của tôi" trong README của bạn.
-
-- **Game tốt là game đúng yêu cầu của khách hàng**, không phải game phức tạp hay đẹp nhất. Làm đúng và chứng minh được là đúng trước, trau chuốt sau.
-- **Cân nhắc kỹ quota token của bạn.** Đốt nhiều token không làm bài tốt hơn. Ngữ cảnh gọn, kế hoạch rõ, kiểm chứng sớm thường vừa rẻ vừa đúng hơn chạy agent liên tục.
-- **Kiểm chứng là phần quan trọng nhất.** Bằng chứng (test, output headless, ảnh, số đo) đáng giá hơn lời mô tả.
-
----
-
-## Bàn giao cuối cùng
-
-Một **repo GitHub cá nhân, public**, gồm:
-
-1. **Toàn bộ mã nguồn** của game qua 4 phase, tag `phase-1` … `phase-4`, Release `v1.0.0`.
-2. **Video demo `.mp4` dưới 5 phút** (đính kèm Release `v1.0.0` hoặc `docs/demo/demo.mp4`, link ở đầu README): chơi thử và cho thấy bằng chứng game chạy đúng.
-3. **Bằng chứng kiểm chứng** của từng phase (định dạng tự chọn).
-4. **Harness AI đã dùng** (AGENTS.md / CLAUDE.md, skills, hooks, plugins…), giữ nguyên trong repo và lịch sử git.
-5. **Ghi chép ngắn:** spec/giả định mỗi phase, nhật ký dùng AI (gồm token/chi phí ước tính), retro.
-
-Không commit API key, token hay `.env`. Gửi link repo theo hướng dẫn của Coach.
-
-## Đánh giá (100 điểm)
-
-| Hạng mục | Điểm |
+| Sự kiện | Điểm |
 |---|---|
-| Test tự động ẩn (headless, gồm kiểm tra lại phase trước) | 30 |
-| Kiểm chứng & bằng chứng của bạn | 20 |
-| Quy trình SDLC & harness AI | 15 |
-| Evaluation & retro (gồm cách bạn dùng token) | 10 |
-| Hiệu năng & ổn định | 10 |
-| Chất lượng sản phẩm (đúng yêu cầu, chơi được) | 10 |
-| Video demo | 5 |
+| Nhặt 1 đom đóm (`per_mote`) | `+10` |
+| Thắp sáng 1 Đèn Lồng Lớn (`per_lantern`) | `+100` |
+| Làm choáng 1 Bóng Mực bằng Pulse (`per_stun`) | `+25` |
+| Thưởng khi thắng — mỗi giây còn lại (`per_second_left`) | `+2 × floor(time_left_s)` |
+| Thưởng khi thắng — mỗi ngọn lửa còn lại (`per_flame_left`) | `+50 × flames` |
 
-## Quy định
+---
 
-- Dùng AI thoải mái; không sao chép repo của người khác.
-- Bằng chứng phải thật: test luôn đạt hay output sửa tay là vi phạm.
-- Nhân vật, bối cảnh là bản gốc của lab; asset bên ngoài chỉ dùng loại CC0/CC-BY/MIT hoặc tự tạo, ghi nguồn trong `CREDITS.md`.
+## Sáng tạo của tôi
+
+1. **Mây phong cách Ninja & Đèn nón lá phản hồi ánh sáng:** Khi chạy, Mây lao nghiêng người về trước với khăn choàng đỏ-vàng phấp phới, để lại vệt bụi ánh sáng và lộn nhào khi nhảy; chiếc đèn nhỏ treo dưới vành nón lá sáng rực dần tỉ lệ thuận với số đom đóm đang mang.
+2. **Tạo hình Bóng Mực dạng Bóng Ma (Spectral Ghosts):** Bóng Mực trong PRD-0 được thể hiện trực quan thành những bóng ma bán trong suốt có mắt phát sáng và đốm linh hồn xoay quanh, run rẩy mờ dần khi tiến gần vùng sáng đèn lồng hoặc trúng Tỏa sáng.
+3. **Đèn hoa đăng ước nguyện, mưa đêm & hiệu ứng hậu kỳ Bloom:** Khi thắp sáng một Đèn Lồng Lớn, 5 chiếc đèn hoa đăng bay lên bầu trời sao, ánh sáng đảo ấm dần lên; kết hợp mưa đêm nhẹ và `UnrealBloomPass` của Three.js giúp đèn lồng, đom đóm và nấm đêm tỏa hào quang dịu mắt.
+4. **Âm thanh ngũ cung tổng hợp (Procedural Web Audio):** Hiệu ứng chuông ngũ cung khi nhặt đom đóm, hợp âm ấm khi thắp đèn, tiếng sóng ánh sáng khi tỏa sáng — hoàn toàn tổng hợp bằng Web Audio API, không dùng file âm thanh ngoài, có phím `M` tắt tiếng.
+
+**Bằng chứng không phá Test Contract:** Toàn bộ 4 tính năng trên nằm hoàn toàn trong lớp hiển thị (`src/client/main.js`, `src/client/audio.js`), tách biệt tuyệt đối khỏi lõi mô phỏng (`src/sim/`). Kết quả chạy `npm test` (13/13 pass) và `npm run verify` (6/6 pass, gồm kiểm tra tất định 2 lần chạy giống nhau từng byte) xác nhận đầu ra headless hoàn toàn không bị ảnh hưởng.
+
+---
+
+## Hồ sơ SDLC, Harness AI & Bằng chứng
+
+- **Contract:** [game.contract.json](game.contract.json)
+- **Harness AI:** [AGENTS.md](AGENTS.md), [.agents/skills/verify-phase/SKILL.md](.agents/skills/verify-phase/SKILL.md), [.github/workflows/ci.yml](.github/workflows/ci.yml)
+- **Ghi chép & Giả định Phase 1:** [docs/notes/phase-1.md](docs/notes/phase-1.md)
+- **Bằng chứng kiểm chứng Phase 1:** [docs/proof/phase-1.md](docs/proof/phase-1.md)
+- **Bản quyền & Nguồn:** [LICENSE](LICENSE), [CREDITS.md](CREDITS.md)
+- **Tài liệu đề lab gốc:** [GUIDE.md](GUIDE.md), [CHECKPOINTS.md](CHECKPOINTS.md), [SUBMISSION.md](SUBMISSION.md), [RULES.md](RULES.md), [RUBRIC.md](RUBRIC.md)
