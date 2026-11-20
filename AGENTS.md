@@ -1,27 +1,26 @@
-# AGENTS.md — Đảo Đèn Lồng (Phase 2 · Contract v1.1)
+# AGENTS.md — Đảo Đèn Lồng (Phase 3 · Contract v1.2)
 
 ## Commands
 - Install & build: `npm install && npm run build`
 - Run 3D game: `npm run dev`
 - Run unit + contract tests: `npm test`
-- Run full Contract v1.1 & determinism verification: `npm run verify`
+- Run full Contract v1.2 & determinism verification: `npm run verify`
 - Run headless CLI: `node src/headless.js --seed 1 --night 1 --ticks 600 --out out.jsonl` (`--night 1|2|3`)
 
 ## Architecture Rules
-1. **Strict Sim/View Separation**: `src/sim/` (`engine.js`, `maps.js`, `tuning.js`, `prng.js`, `inputs.js`, `scenario.js`) MUST have zero DOM, WebGL, or Three.js dependencies so headless mode runs purely in Node.js at 60 ticks/sec.
-2. **Contract Single Source of Truth**: All standardized constants in `src/sim/tuning.js` MUST match `game.contract.json` (`contract_version: "1.1"`). `npm test` enforces exact equality.
-3. **Determinism**: Never use `Math.random()` or `Date.now()` inside `src/sim/`. Always use `SeededPRNG` (`src/sim/prng.js`, with `seed === 0` mapped distinctly from `seed === 1`).
-4. **Creative Features Isolation**: Visual/audio enhancements (Ninja Mây, spectral ghost shader, sky lanterns, Bloom, Web Audio) MUST live strictly in `src/client/` and never alter `src/sim/` state or headless JSONL output.
+1. **Strict Sim/View Separation**: `src/sim/` MUST have zero DOM, WebGL, or Three.js dependencies so headless mode runs purely in Node.js at 60 ticks/sec.
+2. **Contract Single Source of Truth**: `src/sim/tuning.js` MUST match `game.contract.json` (`contract_version: "1.2"`). `npm test` enforces exact equality.
+3. **Integer Fuel Math**: Always compute lantern fuel in integer `1/60` units (`0..6000`) inside `src/sim/engine.js` to avoid floating-point drift at `0.0`, `30.0`, and `100.0`.
+4. **Creative Features Isolation**: Visual/audio features (Ninja Mây, spectral ghosts, sky lanterns, rain, Bloom, Web Audio, colorblind mode) MUST stay strictly in `src/client/`.
 
-## Test Contract v1.1 Invariants
+## Test Contract v1.2 Invariants
 - 60 ticks/sec fixed (`DT = 1/60`). Snapshot tick 0 is post-scenario, pre-input.
-- Mandatory 12-step tick order: (1) Input & pause → (2) Decrement timers → (3) Move Mây (jump, dash, jump pads, wind) + fall check → (4) Pick motes & charms → (5) Interact lanterns → (6) Safe zones → (7) Pulse → (8) Move Shades & Drifters → (9) Collisions (Drifters steal first, then Shades hit by ascending `id`) → (10) Scheduled spawns → (11) Win/Loss (`no_flames` → `all_lit` → `dawn`) → (12) Snapshot.
-- When `paused`: `tick` increments, but `sim_tick` and all timers/spawns/TTL stay frozen; snapshot `state: "paused"`.
-- Shade states MUST be strictly one of: `spawning`, `wander`, `chase`, `recoil`, `stunned`.
-- Scoring: `+10` per deposited mote, `+100` per lit lantern, `+5` per stunned shade (even re-stun), win bonus `floor(time_left_s)*2 + flames*50`.
-- Invalid `inputs` or `scenario` files MUST exit with code `2` and print to `stderr`.
-- Full 21,600-tick headless Night MUST complete in `≤ 30s`.
-- Timers set during a tick MUST NOT be decremented in the same tick they are assigned.
+- Step 2 decrements timers + lantern fuel (`1/60` decay + `5/60` per draining shade); immediately extinguishes lanterns with `fuel <= 0` (`lantern_out`).
+- Safe zone (`6m`) applies ONLY when `l.lit && fuel >= 30.0`. Refueling from `<30` to `>=30` pushes shades out over `≤ 30` ticks.
+- Shade states: `spawning`, `wander`, `chase`, `recoil`, `stunned`, `drain`.
+- No early win on `all_lit`. Win at dawn (`dawn_survived`) if alive and `lit >= ceil(0.6 * total)`. `no_flames` always takes priority.
+- Dynamic carry capacity: `min(20, 10 + 2 * successful_lights)`.
+- Scoring: `+5` per deposited/refueled mote, `+100` first light, `+40` relight, `+15` pulsing draining shade (else `+5`), dawn bonus `50 + floor(fuel)` per lit lantern + `50 * flames`.
 
 ## Verification Rule
 - Never claim a task is done without running `npm test`, `npm run verify`, and `npm run build` and checking real output.
