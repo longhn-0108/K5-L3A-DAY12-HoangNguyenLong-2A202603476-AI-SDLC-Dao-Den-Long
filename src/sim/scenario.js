@@ -14,7 +14,7 @@ function isNonNegInt(v) {
   return Number.isInteger(v) && v >= 0;
 }
 
-const VALID_SHADE_STATES = new Set(['spawning', 'wander', 'chase', 'recoil', 'stunned']);
+const VALID_SHADE_STATES = new Set(['spawning', 'wander', 'chase', 'recoil', 'stunned', 'drain']);
 const VALID_DRIFTER_STATES = new Set(['idle', 'chase', 'flee', 'removed']);
 
 export function validateScenario(raw) {
@@ -29,7 +29,7 @@ export function validateScenario(raw) {
     if (raw.player.pos !== undefined && !isVec3(raw.player.pos)) {
       throw new ValidationError('scenario.player.pos must be [x, y, z]');
     }
-    for (const k of ['carried', 'flames', 'invuln_ticks', 'dash_cd_ticks', 'pulse_cd_ticks', 'charm_ticks']) {
+    for (const k of ['carried', 'flames', 'invuln_ticks', 'dash_cd_ticks', 'pulse_cd_ticks', 'charm_ticks', 'successful_lights']) {
       if (raw.player[k] !== undefined && !isNonNegInt(raw.player[k])) {
         throw new ValidationError(`scenario.player.${k} must be a non-negative integer`);
       }
@@ -121,6 +121,12 @@ export function validateScenario(raw) {
       }
       if (l.lit !== undefined && typeof l.lit !== 'boolean') {
         throw new ValidationError(`scenario.lanterns[${i}].lit must be a boolean`);
+      }
+      if (l.fuel !== undefined && (typeof l.fuel !== 'number' || !Number.isFinite(l.fuel) || l.fuel < 0 || l.fuel > 100)) {
+        throw new ValidationError(`scenario.lanterns[${i}].fuel must be a number in [0, 100]`);
+      }
+      if (l.ever_lit !== undefined && typeof l.ever_lit !== 'boolean') {
+        throw new ValidationError(`scenario.lanterns[${i}].ever_lit must be a boolean`);
       }
     }
   }
