@@ -400,7 +400,6 @@ export class GameEngine {
     }
 
     // 5. Pulse: spend light to stun & push nearby shades
-    const justStunnedIds = new Set();
     if (pulsePressed && this.player.pulseCooldown <= EPS && this.player.carried >= TUNING.pulse_cost) {
       this.player.carried -= TUNING.pulse_cost;
       this.player.pulseCooldown = TUNING.pulse_cooldown_s;
@@ -410,7 +409,6 @@ export class GameEngine {
         if (d <= TUNING.pulse_radius + EPS) {
           s.state = 'stunned';
           s.stunTimer = TUNING.pulse_stun_s;
-          justStunnedIds.add(s.id);
           let dx = s.pos[0] - this.player.pos[0];
           let dz = s.pos[2] - this.player.pos[2];
           const len = Math.hypot(dx, dz);
@@ -434,12 +432,10 @@ export class GameEngine {
     // 6. Shades AI + safe_radius + hit detection
     for (const s of this.shades) {
       if (s.state === 'stunned') {
-        if (!justStunnedIds.has(s.id)) {
-          s.stunTimer -= DT;
-          if (s.stunTimer <= EPS) {
-            s.stunTimer = 0;
-            s.state = 'chase';
-          }
+        s.stunTimer -= DT;
+        if (s.stunTimer <= EPS) {
+          s.stunTimer = 0;
+          s.state = 'chase';
         }
       } else {
         const dx = this.player.pos[0] - s.pos[0];
