@@ -20,7 +20,6 @@
 - Invalid `inputs` or `scenario` files MUST exit with code `2` and print an error to `stderr`.
 - Scenario setup MUST NOT emit events or award score.
 - Coordinates and `time_left_s` in JSONL are rounded to 3 decimal places.
-- Timers set during a tick (e.g., `stunTimer`, `invulnTimer`, `pulseCooldown`) MUST NOT be decremented in the same tick they are assigned; lock every duration parameter with an exact-tick unit test.
 
 ## Verification Rule
 - Never claim a task is done without running `npm test && npm run verify && npm run build` and checking real output.
