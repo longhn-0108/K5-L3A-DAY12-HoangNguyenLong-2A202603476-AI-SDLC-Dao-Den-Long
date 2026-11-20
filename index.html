@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Đảo Đèn Lồng — Đêm 1: Đảo Bến</title>
+  <link rel="stylesheet" href="/src/client/style.css" />
+</head>
+
+<body>
+  <canvas id="game-canvas"></canvas>
+
+  <!-- HUD -->
+  <div id="hud" class="hidden">
+    <div class="hud-top-left">
+      <div class="stat-pill" title="Ngọn lửa (Máu)">
+        <span class="label">Lửa</span>
+        <span id="hud-flames" class="value flames">🔥🔥🔥</span>
+      </div>
+      <div class="stat-pill" title="Đom đóm đang mang">
+        <span class="label">Đom đóm</span>
+        <span id="hud-carried" class="value gold">0 / 10</span>
+      </div>
+      <div class="stat-pill" title="Đèn Lồng Lớn đã thắp">
+        <span class="label">Đèn Lớn</span>
+        <span id="hud-lanterns" class="value gold">0 / 5</span>
+      </div>
+    </div>
+
+    <div class="hud-top-right">
+      <div class="stat-pill">
+        <span class="label">Thời gian</span>
+        <span id="hud-time" class="value">04:00</span>
+      </div>
+      <div class="stat-pill">
+        <span class="label">Điểm</span>
+        <span id="hud-score" class="value gold">0</span>
+      </div>
+      <button id="btn-mute" class="icon-btn" title="Tắt/Bật âm thanh (M)">🔊</button>
+    </div>
+
+    <div id="hud-prompt" class="prompt hidden"></div>
+
+    <div class="hud-bottom">
+      <div id="hud-pulse" class="pulse-badge">Tỏa sáng [R] · Tốn 2 ✨ · Sẵn sàng</div>
+      <div class="controls-hint">
+        WASD: Di chuyển · Space: Nhảy · E/F: Thắp đèn · R: Tỏa sáng · Kéo chuột / ←→: Xoay camera
+      </div>
+    </div>
+  </div>
+
+  <!-- Start / End Overlay -->
+  <div id="overlay">
+    <div class="panel">
+      <p class="eyebrow">Đêm 1 · Đảo Bến</p>
+      <h1 id="overlay-title">Đảo Đèn Lồng</h1>
+      <p id="overlay-desc" class="desc">
+        Sương đen đã nuốt trọn ánh sáng của hòn đảo giữa biển mây. Hãy giúp <strong>Mây</strong> thu thập
+        <strong>đom đóm</strong> để thắp lại <strong>5 Đèn Lồng Lớn</strong>, và tỏa sáng xua đuổi
+        <strong>Bóng Mực</strong>.
+      </p>
+      <div id="overlay-stats" class="stats-grid hidden"></div>
+      <div class="controls-box">
+        <div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Di chuyển</div>
+        <div><kbd>Space</kbd> Nhảy</div>
+        <div><kbd>E</kbd> / <kbd>F</kbd> Nạp sáng vào đèn</div>
+        <div><kbd>R</kbd> Tỏa sáng xua Bóng Mực</div>
+        <div><kbd>←</kbd><kbd>→</kbd> / Kéo chuột: Xoay góc nhìn</div>
+        <div><kbd>M</kbd> Tắt / bật âm thanh</div>
+      </div>
+      <button id="btn-play" class="primary-btn">Bắt đầu Đêm 1</button>
+    </div>
+  </div>
+
+  <script type="module" src="/src/client/main.js"></script>
+</body>
+
+</html>
