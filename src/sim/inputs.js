@@ -34,7 +34,7 @@ export function validateInputs(raw) {
     if (f.cam_yaw_deg !== undefined && (typeof f.cam_yaw_deg !== 'number' || !Number.isFinite(f.cam_yaw_deg))) {
       throw new ValidationError(`inputs.frames[${i}].cam_yaw_deg must be a finite number`);
     }
-    for (const key of ['jump', 'interact', 'pulse', 'dash']) {
+    for (const key of ['jump', 'interact', 'pulse', 'dash', 'pause']) {
       if (f[key] !== undefined && typeof f[key] !== 'boolean') {
         throw new ValidationError(`inputs.frames[${i}].${key} must be a boolean`);
       }
@@ -44,9 +44,6 @@ export function validateInputs(raw) {
   return raw;
 }
 
-/**
- * Stateful timeline that applies carry-forward input frames at each tick.
- */
 export class InputTimeline {
   constructor(validatedInputs = null) {
     this.frames = validatedInputs ? validatedInputs.frames : [];
@@ -58,6 +55,7 @@ export class InputTimeline {
       interact: false,
       pulse: false,
       dash: false,
+      pause: false,
     };
   }
 
@@ -70,6 +68,7 @@ export class InputTimeline {
       if (f.interact !== undefined) this.current.interact = f.interact;
       if (f.pulse !== undefined) this.current.pulse = f.pulse;
       if (f.dash !== undefined) this.current.dash = f.dash;
+      if (f.pause !== undefined) this.current.pause = f.pause;
       this.cursor += 1;
     }
     return {
@@ -79,6 +78,7 @@ export class InputTimeline {
       interact: this.current.interact,
       pulse: this.current.pulse,
       dash: this.current.dash,
+      pause: this.current.pause,
     };
   }
 }

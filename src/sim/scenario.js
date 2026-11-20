@@ -10,6 +10,13 @@ function isVec3(v) {
   return Array.isArray(v) && v.length === 3 && v.every((n) => typeof n === 'number' && Number.isFinite(n));
 }
 
+function isNonNegInt(v) {
+  return Number.isInteger(v) && v >= 0;
+}
+
+const VALID_SHADE_STATES = new Set(['spawning', 'wander', 'chase', 'recoil', 'stunned']);
+const VALID_DRIFTER_STATES = new Set(['idle', 'chase', 'flee', 'removed']);
+
 export function validateScenario(raw) {
   if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
     throw new ValidationError('Scenario must be a JSON object');
@@ -20,21 +27,19 @@ export function validateScenario(raw) {
       throw new ValidationError('scenario.player must be an object');
     }
     if (raw.player.pos !== undefined && !isVec3(raw.player.pos)) {
-      throw new ValidationError('scenario.player.pos must be a [x, y, z] array of numbers');
+      throw new ValidationError('scenario.player.pos must be [x, y, z]');
     }
-    if (raw.player.carried !== undefined && (!Number.isInteger(raw.player.carried) || raw.player.carried < 0)) {
-      throw new ValidationError('scenario.player.carried must be a non-negative integer');
-    }
-    if (raw.player.flames !== undefined && (!Number.isInteger(raw.player.flames) || raw.player.flames < 0)) {
-      throw new ValidationError('scenario.player.flames must be a non-negative integer');
+    for (const k of ['carried', 'flames', 'invuln_ticks', 'dash_cd_ticks', 'pulse_cd_ticks', 'charm_ticks']) {
+      if (raw.player[k] !== undefined && !isNonNegInt(raw.player[k])) {
+        throw new ValidationError(`scenario.player.${k} must be a non-negative integer`);
+      }
     }
   }
 
-  if (raw.random_motes !== undefined && typeof raw.random_motes !== 'boolean') {
-    throw new ValidationError('scenario.random_motes must be a boolean');
-  }
-  if (raw.random_shades !== undefined && typeof raw.random_shades !== 'boolean') {
-    throw new ValidationError('scenario.random_shades must be a boolean');
+  for (const b of ['random_motes', 'random_shades', 'random_drifters', 'wind_enabled']) {
+    if (raw[b] !== undefined && typeof raw[b] !== 'boolean') {
+      throw new ValidationError(`scenario.${b} must be a boolean`);
+    }
   }
 
   if (raw.time_left_s !== undefined && (typeof raw.time_left_s !== 'number' || !Number.isFinite(raw.time_left_s) || raw.time_left_s < 0)) {
@@ -42,9 +47,7 @@ export function validateScenario(raw) {
   }
 
   if (raw.motes !== undefined) {
-    if (!Array.isArray(raw.motes)) {
-      throw new ValidationError('scenario.motes must be an array');
-    }
+    if (!Array.isArray(raw.motes)) throw new ValidationError('scenario.motes must be an array');
     for (let i = 0; i < raw.motes.length; i++) {
       const m = raw.motes[i];
       if (isVec3(m)) continue;
@@ -59,9 +62,7 @@ export function validateScenario(raw) {
   }
 
   if (raw.shades !== undefined) {
-    if (!Array.isArray(raw.shades)) {
-      throw new ValidationError('scenario.shades must be an array');
-    }
+    if (!Array.isArray(raw.shades)) throw new ValidationError('scenario.shades must be an array');
     for (let i = 0; i < raw.shades.length; i++) {
       const s = raw.shades[i];
       if (!s || typeof s !== 'object' || Array.isArray(s) || !isVec3(s.pos)) {
@@ -70,13 +71,43 @@ export function validateScenario(raw) {
       if (s.id !== undefined && typeof s.id !== 'string') {
         throw new ValidationError(`scenario.shades[${i}].id must be a string`);
       }
+      if (s.state !== undefined && !VALID_SHADE_STATES.has(s.state)) {
+        throw new ValidationError(`scenario.shades[${i}].state invalid: ${s.state}`);
+      }
+      if (s.state_ticks_left !== undefined && !isNonNegInt(s.state_ticks_left)) {
+        throw new ValidationError(`scenario.shades[${i}].state_ticks_left must be non-negative int`);
+      }
+    }
+  }
+
+  if (raw.drifters !== undefined) {
+    if (!Array.isArray(raw.drifters)) throw new ValidationError('scenario.drifters must be an array');
+    for (let i = 0; i < raw.drifters.length; i++) {
+      const d = raw.drifters[i];
+      if (!d || typeof d !== 'object' || Array.isArray(d) || !isVec3(d.pos)) {
+        throw new ValidationError(`scenario.drifters[${i}] must be an object with pos: [x,y,z]`);
+      }
+      if (d.state !== undefined && !VALID_DRIFTER_STATES.has(d.state)) {
+        throw new ValidationError(`scenario.drifters[${i}].state invalid: ${d.state}`);
+      }
+    }
+  }
+
+  if (raw.charms !== undefined) {
+    if (!Array.isArray(raw.charms)) throw new ValidationError('scenario.charms must be an array');
+    for (let i = 0; i < raw.charms.length; i++) {
+      const c = raw.charms[i];
+      if (!c || typeof c !== 'object' || Array.isArray(c)) {
+        throw new ValidationError(`scenario.charms[${i}] must be an object`);
+      }
+      if (c.pos !== undefined && !isVec3(c.pos)) {
+        throw new ValidationError(`scenario.charms[${i}].pos must be [x,y,z]`);
+      }
     }
   }
 
   if (raw.lanterns !== undefined) {
-    if (!Array.isArray(raw.lanterns)) {
-      throw new ValidationError('scenario.lanterns must be an array');
-    }
+    if (!Array.isArray(raw.lanterns)) throw new ValidationError('scenario.lanterns must be an array');
     for (let i = 0; i < raw.lanterns.length; i++) {
       const l = raw.lanterns[i];
       if (!l || typeof l !== 'object' || Array.isArray(l) || typeof l.id !== 'string') {
@@ -85,7 +116,7 @@ export function validateScenario(raw) {
       if (l.pos !== undefined && !isVec3(l.pos)) {
         throw new ValidationError(`scenario.lanterns[${i}].pos must be [x,y,z]`);
       }
-      if (l.deposited !== undefined && (!Number.isInteger(l.deposited) || l.deposited < 0)) {
+      if (l.deposited !== undefined && !isNonNegInt(l.deposited)) {
         throw new ValidationError(`scenario.lanterns[${i}].deposited must be a non-negative integer`);
       }
       if (l.lit !== undefined && typeof l.lit !== 'boolean') {

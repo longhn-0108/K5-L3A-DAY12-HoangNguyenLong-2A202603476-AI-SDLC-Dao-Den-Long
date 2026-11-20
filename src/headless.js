@@ -53,7 +53,7 @@ function parseArgs(argv) {
   }
 
   if (!Number.isInteger(args.seed)) throw new Error('Missing or invalid --seed <int>');
-  if (args.night !== 1) throw new Error('Invalid --night (Phase 1 supports --night 1)');
+  if (![1, 2, 3].includes(args.night)) throw new Error('Invalid --night (must be 1, 2, or 3)');
   if (!Number.isInteger(args.ticks) || args.ticks < 0) throw new Error('Missing or invalid --ticks <int>');
   if (!args.out || typeof args.out !== 'string') throw new Error('Missing --out <file.jsonl>');
   if (!Number.isInteger(args.snapshotEvery) || args.snapshotEvery <= 0) {
@@ -108,7 +108,7 @@ function main() {
     // Tick 0 snapshot (post-scenario, pre-input)
     lines.push(JSON.stringify(engine.getSnapshot()));
 
-    for (let k = 0; k < args.ticks && engine.state === 'playing'; k++) {
+    for (let k = 0; k < args.ticks && (engine.state === 'playing' || engine.state === 'paused'); k++) {
       const input = timeline.getInputForTick(k);
       const events = engine.step(input);
       for (const ev of events) {

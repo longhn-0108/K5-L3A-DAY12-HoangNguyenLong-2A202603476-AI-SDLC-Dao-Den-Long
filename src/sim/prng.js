@@ -4,7 +4,8 @@
  */
 export class SeededPRNG {
   constructor(seed) {
-    this.state = (Number(seed) >>> 0) || 1;
+    const n = Number(seed) >>> 0;
+    this.state = n === 0 ? 0x9e3779b9 : n;
   }
 
   next() {
