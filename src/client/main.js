@@ -41,6 +41,7 @@ const hudWind = document.getElementById('hud-wind');
 const hudLanterns = document.getElementById('hud-lanterns');
 const hudScore = document.getElementById('hud-score');
 const hudPrompt = document.getElementById('hud-prompt');
+const moteCapLabel = document.getElementById('mote-cap-label');
 const moteBarEl = document.getElementById('mote-bar');
 const cdDashEl = document.getElementById('cd-dash');
 const cdDashVal = document.getElementById('cd-dash-val');
@@ -72,24 +73,27 @@ const optVolume = document.getElementById('opt-volume');
 const optVolumeVal = document.getElementById('opt-volume-val');
 const optSens = document.getElementById('opt-sens');
 const optSensVal = document.getElementById('opt-sens-val');
+const optColorblind = document.getElementById('opt-colorblind');
 const btnCloseSettings = document.getElementById('btn-close-settings');
 
-// Build 10-slot firefly bar
+// Build dynamic firefly bar (up to 20 slots)
 const moteSlots = [];
-for (let i = 0; i < TUNING.carry_capacity; i++) {
+for (let i = 0; i < TUNING.capacity_max; i++) {
   const slot = document.createElement('div');
   slot.className = 'mote-slot';
+  if (i >= TUNING.carry_capacity) slot.classList.add('hidden');
   moteBarEl.appendChild(slot);
   moteSlots.push(slot);
 }
 
 // Persistent settings
 const SETTINGS_KEY = 'dao_den_long_settings_v1';
-const settings = { volume: 0.7, sensitivity: 1.0 };
+const settings = { volume: 0.7, sensitivity: 1.0, colorblind: false };
 try {
   const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
   if (typeof saved.volume === 'number') settings.volume = saved.volume;
   if (typeof saved.sensitivity === 'number') settings.sensitivity = saved.sensitivity;
+  if (typeof saved.colorblind === 'boolean') settings.colorblind = saved.colorblind;
 } catch {}
 
 const sfx = new SoundFX();
@@ -98,12 +102,20 @@ optVolume.value = String(Math.round(settings.volume * 100));
 optVolumeVal.textContent = `${Math.round(settings.volume * 100)}%`;
 optSens.value = String(Math.round(settings.sensitivity * 100));
 optSensVal.textContent = `${settings.sensitivity.toFixed(1)}×`;
+optColorblind.checked = settings.colorblind;
+document.body.classList.toggle('colorblind', settings.colorblind);
 
 function saveSettings() {
   try {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
   } catch {}
 }
+
+optColorblind.addEventListener('change', () => {
+  settings.colorblind = optColorblind.checked;
+  document.body.classList.toggle('colorblind', settings.colorblind);
+  saveSettings();
+});
 
 optVolume.addEventListener('input', () => {
   settings.volume = Number(optVolume.value) / 100;
@@ -697,9 +709,35 @@ function createLanternView(l) {
   core.position.y = 3.2;
   g.add(core);
 
+  // Paper tear/rip strips visible when lantern is unlit (non-color distinction)
+  const ripGroup = new THREE.Group();
+  const ripMat = new THREE.MeshBasicMaterial({ color: 0x161221 });
+  for (let i = 0; i < 3; i++) {
+    const a = (i / 3) * Math.PI * 2;
+    const rip = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.72, 0.08), ripMat);
+    rip.position.set(Math.cos(a) * 0.62, 3.2, Math.sin(a) * 0.62);
+    rip.rotation.y = -a;
+    rip.rotation.z = 0.25;
+    ripGroup.add(rip);
+  }
+  g.add(ripGroup);
+
   const roof = new THREE.Mesh(new THREE.ConeGeometry(1.1, 0.65, 8), poleMat);
   roof.position.y = 4.1;
   g.add(roof);
+
+  // Floating 3D fuel bar above lit lanterns
+  const fuelBarGroup = new THREE.Group();
+  fuelBarGroup.position.y = 5.0;
+  const fuelBg = new THREE.Mesh(
+    new THREE.BoxGeometry(1.8, 0.22, 0.12),
+    new THREE.MeshBasicMaterial({ color: 0x16182b })
+  );
+  const fuelFillMat = new THREE.MeshBasicMaterial({ color: COLORS.lanternLit });
+  const fuelFill = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.16, 0.16), fuelFillMat);
+  fuelBarGroup.add(fuelBg, fuelFill);
+  fuelBarGroup.visible = false;
+  g.add(fuelBarGroup);
 
   const light = new THREE.PointLight(COLORS.lanternLit, 0, 26, 1.25);
   light.position.y = 3.4;
@@ -711,7 +749,7 @@ function createLanternView(l) {
   ring.position.y = 0.05;
   g.add(ring);
 
-  g.userData = { coreMat, light, ringMat };
+  g.userData = { core, coreMat, ripGroup, fuelBarGroup, fuelFill, fuelFillMat, light, ringMat };
   dynamicGroup.add(g);
   return g;
 }
@@ -751,16 +789,14 @@ function createShadeView(s) {
   rEye.position.set(0.16, 0.68, 0.38);
   rig.add(lEye, rEye);
 
-  const ring = new THREE.Mesh(
-    SHARED.ghostRing,
-    new THREE.MeshBasicMaterial({ color: COLORS.shadeRim, transparent: true, opacity: 0.42, side: THREE.DoubleSide })
-  );
+  const ringMat = new THREE.MeshBasicMaterial({ color: COLORS.shadeRim, transparent: true, opacity: 0.42, side: THREE.DoubleSide });
+  const ring = new THREE.Mesh(SHARED.ghostRing, ringMat);
   ring.rotation.x = -Math.PI / 2;
   ring.position.y = -0.92;
   root.add(ring);
 
   root.position.set(s.pos[0], s.pos[1], s.pos[2]);
-  root.userData = { rig, bodyMat };
+  root.userData = { rig, bodyMat, eyeMat, ringMat };
   dynamicGroup.add(root);
   return root;
 }
@@ -1035,8 +1071,10 @@ function handleEvents(events) {
       sfx.playPickup(ev.data.carried);
     } else if (ev.name === 'charm_picked') {
       sfx.playCharm();
-    } else if (ev.name === 'deposit') {
+    } else if (ev.name === 'deposit' || ev.name === 'refuel') {
       sfx.playDeposit();
+    } else if (ev.name === 'lantern_out') {
+      sfx.playHit();
     } else if (ev.name === 'lantern_lit') {
       sfx.playLanternLit();
       const l = engine.lanterns.find((x) => x.id === ev.data.lantern_id);
@@ -1171,23 +1209,43 @@ function syncViews(dtVisual, alpha) {
   ud.playerLight.intensity = 3.8 + carryRatio * 4.2;
   ud.miniLanternMat.emissiveIntensity = 1.8 + carryRatio * 2.5;
 
-  // Lanterns & exact ambient progression: 0.15 + 0.55 * (lit / total)
+  // Lanterns: fuel bar, 1Hz low-fuel blink, squashed 20% + torn paper when unlit
+  const blinkOn = Math.floor(visualClock * 2) % 2 === 0; // 1 Hz blink
   let litCount = 0;
   for (const l of engine.lanterns) {
     if (l.lit) litCount += 1;
     const v = lanternViews.get(l.id);
     if (!v) continue;
-    const prog = l.deposited / TUNING.lantern_cost;
+    const cost = l.everLit ? TUNING.relight_cost : TUNING.lantern_cost;
+    const prog = l.deposited / cost;
+    const fuelPct = l.lit ? Math.max(0, Math.min(1, l.fuelUnits / 6000)) : 0;
+    const isLowFuel = l.lit && l.fuelUnits < 1800;
+
     if (l.lit) {
+      v.userData.core.scale.y = 1.0;
+      v.userData.ripGroup.visible = false;
       v.userData.coreMat.color.setHex(COLORS.lanternCore);
-      v.userData.coreMat.emissiveIntensity = 2.8;
-      v.userData.light.intensity = 22;
-      v.userData.ringMat.opacity = 0.3;
+      v.userData.coreMat.emissiveIntensity = isLowFuel ? (blinkOn ? 2.6 : 0.45) : 2.8;
+      v.userData.light.intensity = isLowFuel ? (blinkOn ? 18 : 6) : 22;
+      v.userData.ringMat.opacity = isLowFuel ? 0 : 0.3;
+
+      v.userData.fuelBarGroup.visible = true;
+      v.userData.fuelBarGroup.lookAt(camera.position);
+      v.userData.fuelFill.scale.x = Math.max(0.01, fuelPct);
+      v.userData.fuelFill.position.x = -(1 - fuelPct) * 0.85;
+      v.userData.fuelFillMat.color.setHex(
+        isLowFuel ? (settings.colorblind ? 0xffffff : 0xff5a5f) : COLORS.lanternLit
+      );
+      v.userData.fuelFill.visible = !isLowFuel || blinkOn;
     } else {
+      // Unlit: squashed 20% + visible paper tear strips (distinguishable without color)
+      v.userData.core.scale.y = 0.8;
+      v.userData.ripGroup.visible = true;
       v.userData.coreMat.color.setHex(COLORS.lanternUnlit);
       v.userData.coreMat.emissiveIntensity = 0.1 + prog * 1.4;
       v.userData.light.intensity = prog > 0 ? 2 + prog * 6 : 0;
       v.userData.ringMat.opacity = 0;
+      v.userData.fuelBarGroup.visible = false;
     }
   }
   ambientLight.intensity = 0.15 + 0.55 * (litCount / engine.lanterns.length);
@@ -1230,7 +1288,11 @@ function syncViews(dtVisual, alpha) {
     mesh.position.set(sx, sy + Math.sin(visualClock * 3.5 + sz) * 0.18, sz);
     mesh.lookAt(px, sy, pz);
 
-    const { rig, bodyMat } = mesh.userData;
+    const { rig, bodyMat, eyeMat, ringMat } = mesh.userData;
+    const rimHex = settings.colorblind ? 0x00b3ff : COLORS.shadeRim;
+    bodyMat.emissive.setHex(rimHex);
+    eyeMat.color.setHex(settings.colorblind ? 0x00b3ff : 0x9ef7ff);
+    ringMat.color.setHex(rimHex);
     if (s.state === 'stunned') {
       bodyMat.color.setHex(COLORS.shadeStun);
       bodyMat.opacity = 0.5;
@@ -1238,7 +1300,7 @@ function syncViews(dtVisual, alpha) {
     } else {
       bodyMat.color.setHex(COLORS.shadeBody);
       bodyMat.opacity = s.state === 'spawning' ? 0.35 : 0.86;
-      rig.rotation.z = Math.sin(visualClock * 4) * 0.08;
+      rig.rotation.z = Math.sin(visualClock * (s.state === 'drain' ? 14 : 4)) * (s.state === 'drain' ? 0.16 : 0.08);
     }
   }
 
@@ -1366,22 +1428,27 @@ function updateOffscreenLanternArrow() {
 function updateHUD() {
   if (!engine) return;
   const p = engine.player;
+  const cap = engine.getCarryCapacity();
+  const threshold = Math.ceil(TUNING.win_ratio * engine.lanterns.length);
   hudFlames.textContent = p.flames > 0 ? '🔥'.repeat(p.flames) : '💨';
   const litCount = engine.lanterns.filter((l) => l.lit).length;
-  hudLanterns.textContent = `${litCount} / ${engine.lanterns.length}`;
+  hudLanterns.textContent = `${litCount} / ${engine.lanterns.length} (≥${threshold})`;
   hudScore.textContent = String(engine.score);
 
-  // 10-slot mote bar
+  // Dynamic firefly capacity bar (10..20 slots)
+  moteCapLabel.textContent = `Đom đóm: ${p.carried} / ${cap}`;
   for (let i = 0; i < moteSlots.length; i++) {
+    moteSlots[i].classList.toggle('hidden', i >= cap);
     moteSlots[i].classList.toggle('filled', i < p.carried);
   }
 
-  // Clock + red blink <= 30s + 10s countdown beep
+  // Clock + danger blink <= 30s (with ⚠ in colorblind mode) + 10s countdown beep
   const sec = Math.ceil(engine.getTimeLeftS());
   const mm = String(Math.floor(sec / 60)).padStart(2, '0');
   const ss = String(sec % 60).padStart(2, '0');
-  hudTime.textContent = `${mm}:${ss}`;
-  hudTime.classList.toggle('danger', sec <= 30);
+  const isDanger = sec <= 30;
+  hudTime.textContent = isDanger && settings.colorblind ? `⚠ ${mm}:${ss}` : `${mm}:${ss}`;
+  hudTime.classList.toggle('danger', isDanger);
   if (sec <= 10 && sec > 0 && sec !== lastCountdownSec && screenMode === 'playing') {
     lastCountdownSec = sec;
     sfx.playCountdown();
@@ -1431,12 +1498,19 @@ function updateHUD() {
     cdPulseVal.textContent = 'Sẵn sàng';
   }
 
-  // Lantern prompt
+  // Lantern prompt (light, relight, or refuel)
   const nearLantern = engine.lanterns.find(
-    (l) => !l.lit && distXZ(p.pos, l.pos) <= TUNING.interact_radius && Math.abs(p.pos[1] - l.pos[1]) <= 2.0
+    (l) => (!l.lit || l.fuelUnits < 6000) && distXZ(p.pos, l.pos) <= TUNING.interact_radius && Math.abs(p.pos[1] - l.pos[1]) <= 2.0
   );
   if (nearLantern) {
-    hudPrompt.textContent = `E — Nạp ánh sáng (${nearLantern.deposited}/${TUNING.lantern_cost})`;
+    if (!nearLantern.lit) {
+      const cost = nearLantern.everLit ? TUNING.relight_cost : TUNING.lantern_cost;
+      hudPrompt.textContent = nearLantern.everLit
+        ? `E — Thắp lại (${nearLantern.deposited}/${cost})`
+        : `E — Nạp ánh sáng (${nearLantern.deposited}/${cost})`;
+    } else {
+      hudPrompt.textContent = `E — Châm dầu (${Math.round(nearLantern.fuelUnits / 60)}%)`;
+    }
     hudPrompt.classList.remove('hidden');
   } else {
     hudPrompt.classList.add('hidden');
