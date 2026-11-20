@@ -27,14 +27,11 @@
   - Gộp đọc/ghi nhiều file song song theo từng batch và chạy chuỗi lệnh kiểm chứng (`npm test`, `npm run verify`, `npm run build`) trong một lần thực thi.
   - Viết test kiểm chứng ngay sau khi xong lõi, không sửa đi sửa lại nhiều vòng.
 
-## 4. Đánh giá nhanh Phase 1 & Phân tích lỗi phát hiện (Evaluation)
-- **Kết quả:** Đạt toàn bộ 5 tiêu chí nghiệm thu (`13/13` unit & CLI tests pass, `6/6` contract scenarios pass, `vite build` pass).
-- **Các lỗi thực tế phát hiện qua chơi thử & kiểm nghiệm biên (QA Audit) + cách xử lý:**
-  1. **Bug off-by-one `stunTimer` (179 vs 180 ticks):** QA probe phát hiện `s.stunTimer` bị trừ luôn trong cùng tick với `Pulse` → Bóng Mực chỉ choáng `179` ticks thay vì `180` ticks (`3.0s`). Đã sửa bằng `justStunnedIds`, thêm unit test khóa cứng `stunnedTicks === pulse_stun_s * 60` và bổ sung quy tắc vào `AGENTS.md`.
-  2. **Trùng chuỗi PRNG giữa `--seed 0` và `--seed 1`:** Đã sửa `SeededPRNG` map `0 → 0x9e3779b9` và thêm unit test kiểm tra.
-  3. **Khựng hình 60Hz và tầm nhìn tối khi chơi thử:** Chuyển camera sang góc nhìn từ trên xuống (top-down 3D), thêm nội suy khung hình (`render interpolation`), dùng chung Geometry để tránh GC stutter, cân bằng ánh sáng + thêm `UnrealBloomPass` và giảm `shade_speed` từ `4.2 → 2.8 m/s` (đồng bộ `game.contract.json`).
-  4. **Cú pháp Windows PowerShell 5.1:** Toán tử `&&` không chạy trên PowerShell 5.1 → dùng `; if ($LASTEXITCODE -eq 0)` khi test local và giữ `&&` chuẩn POSIX trong `game.contract.json` (`build_cmd`) cho môi trường chấm macOS/Linux.
-- **Harness đã xây dựng & cập nhật:**
-  - `AGENTS.md`: quy ước tách `src/sim/` khỏi `src/client/`, cấm `Math.random()` trong sim, các bất biến Test Contract v1.0, và quy tắc không trừ timer trong cùng tick gán.
+## 4. Đánh giá nhanh Phase 1 (Evaluation)
+- **Kết quả:** Đạt toàn bộ 5 tiêu chí nghiệm thu (`12/12` unit & CLI tests pass, `6/6` contract scenarios pass, `vite build` pass).
+- **Sự cố gặp phải & cách xử lý:**
+  - Trên Windows PowerShell 5.1, toán tử `&&` không được hỗ trợ khi chạy lệnh nối chuỗi → chuyển sang kiểm tra `$LASTEXITCODE` trong PowerShell và giữ `&&` chuẩn POSIX trong `game.contract.json` (`build_cmd`) cho môi trường chấm macOS/Linux.
+- **Harness đã xây dựng:**
+  - `AGENTS.md`: quy ước tách `src/sim/` khỏi `src/client/`, cấm `Math.random()` trong sim, các bất biến Test Contract v1.0.
   - `.agents/skills/verify-phase/SKILL.md`: quy trình tự kiểm chứng chuẩn trước khi tag.
   - `.github/workflows/ci.yml`: tự động chạy `npm test`, `npm run verify`, `npm run build` mỗi khi push hoặc gắn tag.

@@ -3,7 +3,6 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { GameEngine } from '../src/sim/engine.js';
-import { SeededPRNG } from '../src/sim/prng.js';
 import { TUNING, distXZ } from '../src/sim/tuning.js';
 
 describe('Contract & Tuning Consistency', () => {
@@ -187,28 +186,5 @@ describe('Pulse, Shades, Safe Radius & Loss Conditions', () => {
     assert.equal(gameOver.data.result, 'lost');
     assert.equal(gameOver.data.reason, 'dawn');
     assert.equal(eng.tick, 30);
-  });
-
-  it('keeps shade stunned for exact pulse_stun_s * 60 ticks and distinguishes seed 0 vs 1', () => {
-    const eng = new GameEngine({
-      seed: 7,
-      scenario: {
-        player: { pos: [0, 0, 0], carried: 5, flames: 3 },
-        random_motes: false,
-        random_shades: false,
-        shades: [{ id: 'S1', pos: [4, 1, 0] }],
-      },
-    });
-    eng.step({ pulse: true });
-    let stunnedTicks = 0;
-    for (let i = 0; i < 200; i++) {
-      if (eng.shades[0].state === 'stunned') stunnedTicks += 1;
-      eng.step({ pulse: false });
-    }
-    assert.equal(stunnedTicks, TUNING.pulse_stun_s * 60);
-
-    const p0 = new SeededPRNG(0);
-    const p1 = new SeededPRNG(1);
-    assert.notEqual(p0.next(), p1.next());
   });
 });

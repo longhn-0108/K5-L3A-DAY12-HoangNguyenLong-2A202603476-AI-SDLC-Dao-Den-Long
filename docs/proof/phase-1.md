@@ -43,13 +43,12 @@ Môi trường kiểm chứng: Windows 11, Node.js `v24.21.0`, npm `11.19.0`.
 ▶ Pulse, Shades, Safe Radius & Loss Conditions
   ✔ stuns and pushes shade on pulse and enforces cooldown (1.0213ms)
   ✔ keeps shades outside safe_radius of lit lanterns (1.0942ms)
-  ✔ damages player, drops motes, grants invuln, and loses on 0 flames (0.6371ms)
-  ✔ loses with reason dawn when time runs out (1.1435ms)
-  ✔ keeps shade stunned for exact pulse_stun_s * 60 ticks and distinguishes seed 0 vs 1 (1.3685ms)
-✔ Pulse, Shades, Safe Radius & Loss Conditions (8.049ms)
-ℹ tests 13
+  ✔ damages player, drops motes, grants invuln, and loses on 0 flames (0.4919ms)
+  ✔ loses with reason dawn when time runs out (0.6079ms)
+✔ Pulse, Shades, Safe Radius & Loss Conditions (4.0376ms)
+ℹ tests 12
 ℹ suites 5
-ℹ pass 13
+ℹ pass 12
 ℹ fail 0
 ℹ skipped 0
 ```

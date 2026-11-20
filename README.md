@@ -36,7 +36,7 @@ node src/headless.js --seed 42 --night 1 --ticks 600 --out out.jsonl
 | `W` `A` `S` `D` (hoặc `↑` `↓`) | Di chuyển theo góc nhìn camera |
 | `Space` | Nhảy |
 | `E` hoặc `F` | Nạp đom đóm vào Đèn Lồng Lớn gần nhất (trong `interact_radius = 3m`) |
-| `R` | Tỏa sáng xua & đẩy lùi Bóng Mực / Bóng Ma (tốn `2` đom đóm, hồi chiêu `4s`) |
+| `R` | Tỏa sáng xua & đẩy lùi Bóng Ma (tốn `2` đom đóm, hồi chiêu `4s`) |
 | `←` `→` / `Q` / Kéo chuột trái | Xoay camera 3D quanh Mây |
 | `M` | Tắt / bật âm thanh |
 
@@ -64,12 +64,11 @@ Thông số khớp 100% với [game.contract.json](game.contract.json):
 
 ## Sáng tạo của tôi
 
-1. **Mây phong cách Ninja & Đèn nón lá phản hồi ánh sáng:** Khi chạy, Mây lao nghiêng người về trước với khăn choàng đỏ-vàng phấp phới, để lại vệt bụi ánh sáng và lộn nhào khi nhảy; chiếc đèn nhỏ treo dưới vành nón lá sáng rực dần tỉ lệ thuận với số đom đóm đang mang.
-2. **Tạo hình Bóng Mực dạng Bóng Ma (Spectral Ghosts):** Bóng Mực trong PRD-0 được thể hiện trực quan thành những bóng ma bán trong suốt có mắt phát sáng và đốm linh hồn xoay quanh, run rẩy mờ dần khi tiến gần vùng sáng đèn lồng hoặc trúng Tỏa sáng.
-3. **Đèn hoa đăng ước nguyện, mưa đêm & hiệu ứng hậu kỳ Bloom:** Khi thắp sáng một Đèn Lồng Lớn, 5 chiếc đèn hoa đăng bay lên bầu trời sao, ánh sáng đảo ấm dần lên; kết hợp mưa đêm nhẹ và `UnrealBloomPass` của Three.js giúp đèn lồng, đom đóm và nấm đêm tỏa hào quang dịu mắt.
-4. **Âm thanh ngũ cung tổng hợp (Procedural Web Audio):** Hiệu ứng chuông ngũ cung khi nhặt đom đóm, hợp âm ấm khi thắp đèn, tiếng sóng ánh sáng khi tỏa sáng — hoàn toàn tổng hợp bằng Web Audio API, không dùng file âm thanh ngoài, có phím `M` tắt tiếng.
+1. **Đèn hoa đăng ước nguyện (Sky Lanterns):** Mỗi khi Mây thắp sáng một Đèn Lồng Lớn, 5 chiếc đèn hoa đăng nhỏ bay từ từ lên bầu trời sao, đồng thời toàn bộ ánh sáng môi trường và sương mù của Đảo Bến ấm dần lên theo số đèn đã thắp.
+2. **Đèn nón lá phản hồi ánh sáng:** Chiếc đèn nhỏ treo dưới vành nón lá của Mây sáng rực dần tỉ lệ thuận với số đom đóm Mây đang mang theo.
+3. **Âm thanh ngũ cung tổng hợp (Procedural Web Audio):** Hiệu ứng chuông ngũ cung khi nhặt đom đóm, hợp âm ấm khi thắp đèn, tiếng sóng ánh sáng khi tỏa sáng — hoàn toàn tổng hợp bằng Web Audio API, không dùng file âm thanh ngoài, có phím `M` tắt tiếng.
 
-**Bằng chứng không phá Test Contract:** Toàn bộ 4 tính năng trên nằm hoàn toàn trong lớp hiển thị (`src/client/main.js`, `src/client/audio.js`), tách biệt tuyệt đối khỏi lõi mô phỏng (`src/sim/`). Kết quả chạy `npm test` (13/13 pass) và `npm run verify` (6/6 pass, gồm kiểm tra tất định 2 lần chạy giống nhau từng byte) xác nhận đầu ra headless hoàn toàn không bị ảnh hưởng.
+**Bằng chứng không phá Test Contract:** Toàn bộ 3 tính năng trên nằm hoàn toàn trong lớp hiển thị (`src/client/main.js`, `src/client/audio.js`), tách biệt tuyệt đối khỏi lõi mô phỏng (`src/sim/`). Kết quả chạy `npm test` (12/12 pass) và `npm run verify` (6/6 pass, gồm kiểm tra tất định 2 lần chạy giống nhau từng byte) xác nhận đầu ra headless hoàn toàn không bị ảnh hưởng.
 
 ---
 
