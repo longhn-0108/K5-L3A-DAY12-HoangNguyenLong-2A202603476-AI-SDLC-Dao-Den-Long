@@ -4,72 +4,129 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Đảo Đèn Lồng — Đêm 1: Đảo Bến</title>
+  <title>Đảo Đèn Lồng — Ba Hòn Đảo</title>
   <link rel="stylesheet" href="/src/client/style.css" />
 </head>
 
 <body>
   <canvas id="game-canvas"></canvas>
 
+  <!-- Off-screen arrow pointing to nearest unlit lantern -->
+  <div id="lantern-arrow" class="lantern-arrow hidden">➤</div>
+
   <!-- HUD -->
   <div id="hud" class="hidden">
     <div class="hud-top-left">
       <div class="stat-pill" title="Ngọn lửa (Máu)">
-        <span class="label">Lửa</span>
-        <span id="hud-flames" class="value flames">🔥🔥🔥</span>
+        <span class="label">Ngọn Lửa</span>
+        <span id="hud-flames" class="value">🔥🔥🔥</span>
       </div>
-      <div class="stat-pill" title="Đom đóm đang mang">
-        <span class="label">Đom đóm</span>
-        <span id="hud-carried" class="value gold">0 / 10</span>
+      <div id="hud-charm" class="stat-pill charm-pill hidden">
+        <span class="label">Bùa Gió</span>
+        <span id="hud-charm-val" class="value gold">10.0s</span>
       </div>
-      <div class="stat-pill" title="Đèn Lồng Lớn đã thắp">
-        <span class="label">Đèn Lớn</span>
-        <span id="hud-lanterns" class="value gold">0 / 5</span>
-      </div>
+    </div>
+
+    <div class="hud-top-center">
+      <div id="hud-night-label" class="night-tag">Đêm 1 — Đảo Bến</div>
+      <div id="hud-time" class="clock">05:00</div>
+      <div id="hud-wind" class="wind-badge hidden">🍃 Gió sắp thổi!</div>
     </div>
 
     <div class="hud-top-right">
       <div class="stat-pill">
-        <span class="label">Thời gian</span>
-        <span id="hud-time" class="value">04:00</span>
+        <span class="label">Đèn Lớn</span>
+        <span id="hud-lanterns" class="value gold">0 / 5</span>
       </div>
       <div class="stat-pill">
         <span class="label">Điểm</span>
         <span id="hud-score" class="value gold">0</span>
       </div>
+      <button id="btn-pause" class="icon-btn" title="Tạm dừng (Esc / P)">⏸</button>
       <button id="btn-mute" class="icon-btn" title="Tắt/Bật âm thanh (M)">🔊</button>
     </div>
 
     <div id="hud-prompt" class="prompt hidden"></div>
 
-    <div class="hud-bottom">
-      <div id="hud-pulse" class="pulse-badge">Tỏa sáng [R] · Tốn 2 ✨ · Sẵn sàng</div>
+    <!-- Bottom-center: 10-slot firefly bar -->
+    <div class="hud-bottom-center">
+      <div id="mote-bar" class="mote-bar" title="Đom đóm đang mang (tối đa 10)"></div>
       <div class="controls-hint">
-        WASD: Di chuyển · Space: Nhảy · E/F: Thắp đèn · R: Tỏa sáng · Kéo chuột / ←→: Xoay camera
+        WASD: Di chuyển · Space: Nhảy · Shift: Lướt · E: Nạp đèn · R: Tỏa sáng · Esc/P: Tạm dừng
+      </div>
+    </div>
+
+    <!-- Bottom-right: Dash & Pulse cooldown icons -->
+    <div class="hud-bottom-right">
+      <div id="cd-dash" class="ability-box">
+        <div class="ability-key">Shift</div>
+        <div class="ability-name">Lướt</div>
+        <div id="cd-dash-val" class="ability-cd">Sẵn sàng</div>
+      </div>
+      <div id="cd-pulse" class="ability-box">
+        <div class="ability-key">R</div>
+        <div class="ability-name">Tỏa sáng (3✨)</div>
+        <div id="cd-pulse-val" class="ability-cd">Sẵn sàng</div>
       </div>
     </div>
   </div>
 
-  <!-- Start / End Overlay -->
+  <!-- Main Menu / Night Intro / Result Overlay -->
   <div id="overlay">
     <div class="panel">
-      <p class="eyebrow">Đêm 1 · Đảo Bến</p>
+      <p id="overlay-eyebrow" class="eyebrow">Hành Trình Ba Hòn Đảo</p>
       <h1 id="overlay-title">Đảo Đèn Lồng</h1>
       <p id="overlay-desc" class="desc">
-        Sương đen đã nuốt trọn ánh sáng của hòn đảo giữa biển mây. Hãy giúp <strong>Mây</strong> thu thập
-        <strong>đom đóm</strong> để thắp lại <strong>5 Đèn Lồng Lớn</strong>, và tỏa sáng xua đuổi
-        <strong>Bóng Mực</strong>.
+        Giúp <strong>Mây</strong> thu thập đom đóm, thắp sáng các Đèn Lồng Lớn qua <strong>3 Đêm</strong>
+        (Đảo Bến, Đảo Cau, Đảo Chuông) để đón Bình Minh trở lại.
       </p>
       <div id="overlay-stats" class="stats-grid hidden"></div>
-      <div class="controls-box">
+
+      <div id="menu-controls" class="controls-box">
         <div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Di chuyển</div>
         <div><kbd>Space</kbd> Nhảy</div>
-        <div><kbd>E</kbd> / <kbd>F</kbd> Nạp sáng vào đèn</div>
-        <div><kbd>R</kbd> Tỏa sáng xua Bóng Mực</div>
-        <div><kbd>←</kbd><kbd>→</kbd> / Kéo chuột: Xoay góc nhìn</div>
-        <div><kbd>M</kbd> Tắt / bật âm thanh</div>
+        <div><kbd>Shift</kbd> Lướt (14 m/s)</div>
+        <div><kbd>E</kbd> Nạp ánh sáng vào đèn</div>
+        <div><kbd>R</kbd> Tỏa sáng (3 đom đóm)</div>
+        <div><kbd>Esc</kbd> / <kbd>P</kbd> Tạm dừng</div>
       </div>
-      <button id="btn-play" class="primary-btn">Bắt đầu Đêm 1</button>
+
+      <div class="btn-row">
+        <button id="btn-primary" class="primary-btn">Bắt đầu Hành Trình</button>
+        <button id="btn-secondary" class="secondary-btn hidden">Về Menu</button>
+        <button id="btn-open-settings" class="secondary-btn">Cài đặt</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pause Modal -->
+  <div id="pause-modal" class="modal hidden">
+    <div class="panel small">
+      <p class="eyebrow">Tạm Dừng</p>
+      <h2>Trò chơi đang dừng</h2>
+      <div class="btn-col">
+        <button id="btn-resume" class="primary-btn">Tiếp tục</button>
+        <button id="btn-restart-night" class="secondary-btn">Chơi lại Đêm này</button>
+        <button id="btn-pause-settings" class="secondary-btn">Cài đặt</button>
+        <button id="btn-pause-menu" class="secondary-btn">Về Menu chính</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="modal hidden">
+    <div class="panel small">
+      <p class="eyebrow">Cài Đặt</p>
+      <h2>Âm thanh & Điều khiển</h2>
+      <div class="setting-row">
+        <label for="opt-volume">Âm lượng: <span id="opt-volume-val">70%</span></label>
+        <input id="opt-volume" type="range" min="0" max="100" value="70" />
+      </div>
+      <div class="setting-row">
+        <label for="opt-sens">Độ nhạy chuột: <span id="opt-sens-val">1.0×</span></label>
+        <input id="opt-sens" type="range" min="20" max="200" value="100" />
+      </div>
+      <button id="btn-close-settings" class="primary-btn">Lưu & Đóng</button>
     </div>
   </div>
 
